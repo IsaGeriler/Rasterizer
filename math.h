@@ -189,6 +189,7 @@ Vec4 Min(const Vec4& v1, const Vec4& v2) { return Vec4(std::min(v1.v[0], v2.v[0]
 // 4x4 Matrix Class
 class Matrix {
 public:
+	// Union elements can be accessed in the same memory address, unlike structs
 	union {
 		float a[4][4];
 		float m[16];
@@ -357,4 +358,58 @@ public:
 			inv[i] = inv[i] * det;
 		return inv;
 	}
+};
+
+// Spherical Coordinate Class
+class SphericalCoordinate {
+public:
+	// Union elements can be accessed in the same memory address, unlike structs
+	union {
+		float sc[3];
+		struct { float phi, theta, r; };
+	};
+
+	// Constructors
+	SphericalCoordinate() : phi(0.f), theta(0.f), r(0.f) {}
+	SphericalCoordinate(float _phi, float _theta) : phi(_phi), theta(_theta), r(1.f) {}
+	SphericalCoordinate(float _phi, float _theta, float _r) : phi(_phi), theta(_theta), r(_r) {}
+
+	// Methods
+	SphericalCoordinate zUpFromCartesian(const Vec3& cartesian) {
+		if (cartesian.lengthSquare() == 0) return SphericalCoordinate();
+		theta = acos(cartesian.z / r);
+		phi = atan2f(cartesian.y, cartesian.x);
+		return SphericalCoordinate(phi, theta);
+	}
+
+	SphericalCoordinate yUpFromCartesian(const Vec3& cartesian) {
+		if (cartesian.lengthSquare() == 0) return SphericalCoordinate();
+		theta = acos(cartesian.y / r);
+		phi = atan2f(cartesian.z, cartesian.x);
+		return SphericalCoordinate(phi, theta);
+	}
+
+	Vec3 zUpToCartesian() { return Vec3(r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)); }
+	Vec3 yUpToCartesian() { return Vec3(r * sin(theta) * cos(phi), r * cos(theta), r * sin(theta) * sin(phi)); }
+
+	float zUpcalculateTheta(const Vec3& cartesian) const { return acos(cartesian.z / r); }
+	float yUpcalculateTheta(const Vec3& cartesian) const { return acos(cartesian.y / r); }
+	float zUPcalculatePhi(const Vec3& cartesian) const { return atan2f(cartesian.y, cartesian.x); }
+	float yUPcalculatePhi(const Vec3& cartesian)  const { return atan2f(cartesian.z, cartesian.x); }
+};
+
+// Colour Class
+class Colour {
+public:
+	// Union elements can be accessed in the same memory address, unlike structs
+	union {
+		float c[4];
+		struct { float r, g, b, a; };
+	};
+
+	// Constructors
+	Colour(float _r, float _g, float _b) : r(_r), g(_g), b(_b), a(1.f) {}
+	Colour(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
+	Colour(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(1.f) {}
+	Colour(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(_a / 255.f) {}
 };
