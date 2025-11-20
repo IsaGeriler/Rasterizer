@@ -6,6 +6,12 @@
 #include <cmath>
 #include <iostream>
 
+// Linear Interpolation
+template<typename Type>
+static Type lerp(const Type a, const Type b, float t) {
+	return a * (1.f - t) + (b * t);
+}
+
 // Vec3 Class
 class Vec3 {
 public:
@@ -370,11 +376,12 @@ public:
 	};
 
 	// Constructors
-	SphericalCoordinate() : phi(0.f), theta(0.f), r(0.f) {}
+	SphericalCoordinate() : phi(0.f), theta(0.f), r(1.f) {}
 	SphericalCoordinate(float _phi, float _theta) : phi(_phi), theta(_theta), r(1.f) {}
 	SphericalCoordinate(float _phi, float _theta, float _r) : phi(_phi), theta(_theta), r(_r) {}
 
 	// Methods
+	// Shading (Z-Up) - Convert from Cartesian
 	SphericalCoordinate zUpFromCartesian(const Vec3& cartesian) {
 		if (cartesian.lengthSquare() == 0) return SphericalCoordinate();
 		theta = acos(cartesian.z / r);
@@ -382,6 +389,7 @@ public:
 		return SphericalCoordinate(phi, theta);
 	}
 
+	// Camera (Y-Up) - Convert from Cartesian
 	SphericalCoordinate yUpFromCartesian(const Vec3& cartesian) {
 		if (cartesian.lengthSquare() == 0) return SphericalCoordinate();
 		theta = acos(cartesian.y / r);
@@ -389,14 +397,89 @@ public:
 		return SphericalCoordinate(phi, theta);
 	}
 
+	// Shading (Z-Up) - Convert to Cartesian
 	Vec3 zUpToCartesian() { return Vec3(r * sin(theta) * cos(phi), r * sin(theta) * sin(phi), r * cos(theta)); }
+
+	// Camera (Y-Up) - Convert to Cartesian
 	Vec3 yUpToCartesian() { return Vec3(r * sin(theta) * cos(phi), r * cos(theta), r * sin(theta) * sin(phi)); }
 
-	float zUpcalculateTheta(const Vec3& cartesian) const { return acos(cartesian.z / r); }
-	float yUpcalculateTheta(const Vec3& cartesian) const { return acos(cartesian.y / r); }
-	float zUPcalculatePhi(const Vec3& cartesian) const { return atan2f(cartesian.y, cartesian.x); }
-	float yUPcalculatePhi(const Vec3& cartesian)  const { return atan2f(cartesian.z, cartesian.x); }
+	// Calculate theta and phi w.r.t. shading (z-up) and camera (y-up)
+	float zUpCalculateTheta(const Vec3& cartesian) const { return acos(cartesian.z / r); }
+	float yUpCalculateTheta(const Vec3& cartesian) const { return acos(cartesian.y / r); }
+	float zUpCalculatePhi(const Vec3& cartesian) const { return atan2f(cartesian.y, cartesian.x); }
+	float yUpCalculatePhi(const Vec3& cartesian)  const { return atan2f(cartesian.z, cartesian.x); }
 };
+
+// Quaternion Class
+class Quaternion {
+public:
+	// Union elements can be accessed in the same memory address, unlike structs
+	union {
+		// Quaternion Form = d + ai + bj + ck
+		float q[4];
+		struct { float d, a, b, c; }; 
+	};
+
+	// Constructors
+	Quaternion() : d(0.f), a(0.f), b(0.f), c(0.f) {}
+	Quaternion(float _d, float _a, float _b, float _c) : d(_d), a(_a), b(_b), c(_c) {}
+
+	// Methods
+	// Magnitude
+	float magnitude() const { return sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d)); }
+
+	// Normalize
+	Quaternion normalize() {
+		float mag = sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d));
+		mag = 1.f / mag;
+		return Quaternion(d / mag, a / mag, b / mag, c / mag);
+	}
+
+	// Conjugate
+	Quaternion conjugate() { return Quaternion(d, -a, -b, -c); }
+
+	// Inverse
+	Quaternion inverse() {
+		float mag = sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d));
+		mag = 1.f / mag;
+		Quaternion conj = conjugate();
+		return Quaternion(conj.d / mag, conj.a / mag, conj.b / mag, conj.c / mag);
+	}
+
+	// Multiply
+	Quaternion multiply(const Quaternion& q2) {
+		return Quaternion((d * q2.d - a * q2.a - b * q2.b - c * q2.c),
+						  (d * q2.a + a * q2.d + b * q2.c - c * q2.b),
+						  (d * q2.b - a * q2.c + b * q2.d + c * q2.a),
+						  (d * q2.c + a * q2.b - b * q2.a + c * q2.d));
+	}
+
+	// Construct a Quaternion from axis-angle
+	Quaternion fromAxisAngle(const Vec3& pVec, const float theta) {
+		return Quaternion(cos(theta / 2), pVec.x * sin(theta / 2), pVec.y * sin(theta / 2), pVec.z * sin(theta / 2));
+	}
+
+	// Quaternion to Matrix
+	Matrix toMatrix() const {
+		Matrix m;
+		float aa = a * a, ab = a * b, ac = a * c;
+		float bb = b * b, bc = b * c, cc = c * c;
+		float da = d * a, db = d * b, dc = d * c;
+		
+		m[0] = 1 - 2 * (bb + cc); m[1] = 2 * (ab - dc); m[2] = 2 * (ac + db); m[3] = 0;
+		m[4] = 2 * (ab + dc); m[5] = 1 - 2 * (aa + cc); m[6] = 2 * (bc - da); m[7] = 0;
+		m[8] = 2 * (ac - db); m[9] = 2 * (bc + da); m[10] = 1 - 2 * (aa + bb); m[11] = 0;
+		m[12] = m[13] = m[14] = 0; m[15] = 1;
+		return m;
+	}
+};
+
+Quaternion multiply(const Quaternion& q1, const Quaternion& q2) {
+	return Quaternion((q1.d * q2.d - q1.a * q2.a - q1.b * q2.b - q1.c * q2.c),
+					  (q1.d * q2.a + q1.a * q2.d + q1.b * q2.c - q1.c * q2.b),
+					  (q1.d * q2.b - q1.a * q2.c + q1.b * q2.d + q1.c * q2.a),
+					  (q1.d * q2.c + q1.a * q2.b - q1.b * q2.a + q1.c * q2.d));
+}
 
 // Colour Class
 class Colour {
