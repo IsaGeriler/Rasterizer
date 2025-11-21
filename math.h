@@ -6,6 +6,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "GamesEngineeringBase.h"
+
 // Vec3 Class
 class Vec3 {
 public:
@@ -107,7 +109,9 @@ public:
 	};
 
 	// Constructors
-	Vec4() : x(0.f), y(0.f), z(0.f), w(0.f) {}
+	Vec4() : x(0.f), y(0.f), z(0.f), w(1.f) {}
+	Vec4(float _x, float _y) : x(_x), y(_y), z(0.f), w(1.f) {}
+	Vec4(float _x, float _y, float _z) : x(_x), y(_y), z(_z), w(1.f) {}
 	Vec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
 
 	// Vec4 Operator Overloading
@@ -519,5 +523,44 @@ public:
 	Colour(float _r, float _g, float _b) : r(_r), g(_g), b(_b), a(1.f) {}
 	Colour(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
 	Colour(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(1.f) {}
-	Colour(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(_a / 255.f) {}
+	Colour(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(_a) {}
+
+	// Operator Overloading
+	Colour operator+(const Colour& colour) const { return Colour(r + colour.r, g + colour.g, b + colour.b, a + colour.a); }
+	Colour operator-(const Colour& colour) const { return Colour(r - colour.r, g - colour.g, b - colour.b, a - colour.a); }
+	Colour operator*(const Colour& colour) const { return Colour(r * colour.r, g * colour.g, b * colour.b, a * colour.a); }
+	Colour operator*(const float scalar) const { return Colour(r * scalar, g * scalar, b * scalar, a * scalar); }
+	Colour operator/(const Colour& colour) const { return Colour(r / colour.r, g / colour.g, b / colour.b, a / colour.a); }
+	Colour operator/(const float scalar) const { return Colour(r / scalar, g / scalar, b / scalar, a / scalar); }
 };
+
+// Triangle Class
+class Triangle {
+public:
+	// Union elements can be accessed in the same memory address, unlike structs
+	union {
+		Vec4 v[3];
+		struct { Vec4 v0, v1, v2; };
+	};
+
+	// Constructor
+	Triangle(const Vec4& _v0, const Vec4& _v1, const Vec4& _v2) : v0(_v0), v1(_v1), v2(_v2) {}
+};
+
+// Edge Function
+float edgeFunction(const Vec4& v0, const Vec4& v1, const Vec4& p) { return (((p.x - v0.x) * (v1.y - v0.y)) - ((v1.x - v0.x) * (p.y - v0.y))); }
+
+// Find Bounds
+void findBounds(GamesEngineeringBase::Window& canvas, const Vec4& v0, const Vec4& v1, const Vec4& v2, Vec4& tr, Vec4& bl)
+{
+	tr.x = std::min(std::max(std::max(v0.x, v1.x), v2.x), canvas.getWidth() - 1 / 1.f);
+	tr.y = std::min(std::max(std::max(v0.y, v1.y), v2.y), canvas.getHeight() - 1 / 1.f);
+	bl.x = std::max(std::min(std::min(v0.x, v1.x), v2.x), 0.f);
+	bl.y = std::max(std::min(std::min(v0.y, v1.y), v2.y), 0.f);
+}
+
+// Simple Interpolate Function
+template<typename Type>
+Type simpleInterpolateAttribute(Type a0, Type a1, Type a2, float alpha, float beta, float gamma) {
+	return (a0 * alpha) + (a1 * beta) + (a2 * gamma);
+}
