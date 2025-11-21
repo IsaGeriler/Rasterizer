@@ -6,12 +6,6 @@
 #include <cmath>
 #include <iostream>
 
-// Linear Interpolation
-template<typename Type>
-static Type lerp(const Type a, const Type b, float t) {
-	return a * (1.f - t) + (b * t);
-}
-
 // Vec3 Class
 class Vec3 {
 public:
@@ -424,6 +418,10 @@ public:
 	Quaternion() : d(0.f), a(0.f), b(0.f), c(0.f) {}
 	Quaternion(float _d, float _a, float _b, float _c) : d(_d), a(_a), b(_b), c(_c) {}
 
+	// Operator Overloading
+	// Unary Negate
+	Quaternion operator-() { return Quaternion(-d, -a, -b, -c); }
+
 	// Methods
 	// Magnitude
 	float magnitude() const { return sqrt(SQ(a) + SQ(b) + SQ(c) + SQ(d)); }
@@ -472,13 +470,40 @@ public:
 		m[12] = m[13] = m[14] = 0; m[15] = 1;
 		return m;
 	}
+
+	// Dot Product
+	float Dot(const Quaternion& q) const { return d * q.d + a * q.a + b * q.b + c * q.c; }
 };
+
+float Dot(const Quaternion& q1, const Quaternion& q2) { return q1.d * q2.d + q1.a * q2.a + q1.b * q2.b + q1.c * q2.c; }
 
 Quaternion multiply(const Quaternion& q1, const Quaternion& q2) {
 	return Quaternion((q1.d * q2.d - q1.a * q2.a - q1.b * q2.b - q1.c * q2.c),
 					  (q1.d * q2.a + q1.a * q2.d + q1.b * q2.c - q1.c * q2.b),
 					  (q1.d * q2.b - q1.a * q2.c + q1.b * q2.d + q1.c * q2.a),
 					  (q1.d * q2.c + q1.a * q2.b - q1.b * q2.a + q1.c * q2.d));
+}
+
+// Linear Interpolation
+template<typename Type>
+static Type lerp(const Type a, const Type b, float t) {
+	return a * (1.f - t) + (b * t);
+}
+
+// Spherical Linear Interpolation
+static Quaternion slerp(Quaternion q1, Quaternion q2, float t) {
+	float dot = Dot(q1, q2);
+
+	// Check if q1.q2 < 0
+	if (dot < 0) {
+		q2 = -q2;
+		dot = -dot;
+	}
+
+	float theta = acos(dot);
+	float s0 = (sin(theta * (1 - t))) / sin(theta);
+	float s1 = (sin(theta * t)) / sin(theta);
+	return Quaternion(q1.d * s0 + q2.d * s1, q1.a * s0 + q2.a * s1, q1.b * s0 + q2.b * s1, q1.c * s0 + q2.c * s1);
 }
 
 // Colour Class
