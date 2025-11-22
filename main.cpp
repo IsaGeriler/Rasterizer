@@ -76,7 +76,7 @@ void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t) 
 	}
 }
 
-// Draw raw 2D Rasterization
+// Draw 2D Rasterization
 static void renderLesson1_2D(GamesEngineeringBase::Window& canvas) {
 	Vec4 v0(512.f, 184.f);
 	Vec4 v1(685.f, 484.f);
@@ -85,7 +85,7 @@ static void renderLesson1_2D(GamesEngineeringBase::Window& canvas) {
 	rasterizeTriangle(canvas, t);
 }
 
-// 3D Projection
+// Draw 3D Projection
 static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix) {
 	Vec4 v0(0.0f, 0.3f, 1.0f);
 	Vec4 v1(0.3f, -0.3f, 1.0f);
