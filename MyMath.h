@@ -2,6 +2,10 @@
 #define _USE_MATH_DEFINES
 #define SQ(x) (x * x)
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -154,6 +158,8 @@ public:
 		return *this;
 	}
 
+	float& operator[](int index) { return v[index]; }
+
 	// Unary Negate
 	Vec4 operator-() const { return Vec4(-v[0], -v[1], -v[2], -v[3]); }
 
@@ -184,6 +190,12 @@ public:
 	// Max and Min of Vector Components
 	float max() const { return std::max(std::max(x, y), std::max(y, z)); }
 	float min() const { return std::min(std::min(x, y), std::min(y, z)); }
+
+	// Divide by w
+	Vec4 divideByW() {
+		float W = 1.f / v[3];
+		return Vec4(v[0] * W, v[1] * W, v[2] * W, W);
+	}
 };
 
 float Dot(const Vec4& v1, const Vec4& v2) { return (v1.v[0] * v2.v[0] + v1.v[1] * v2.v[1] + v1.v[2] * v2.v[2] + v1.v[3] * v2.v[3]); }
@@ -272,50 +284,51 @@ public:
 	// Rotate on x-axis
 	Matrix rotateOnXAxis(const float theta) {
 		Matrix xMat;
-		xMat[0] = 1; xMat[1] = 0; xMat[2] = 0; xMat[3] = 0;
-		xMat[4] = 0; xMat[5] = cos(theta); xMat[6] = -sin(theta); xMat[7] = 0;
-		xMat[8] = 0; xMat[9] = sin(theta); xMat[10] = cos(theta); xMat[11] = 0;
-		xMat[12] = 0; xMat[13] = 0; xMat[14] = 0; xMat[15] = 1;
+		for (int i = 0; i < 16; i++) xMat[i] = 0;
+		xMat[0] = 1;
+		xMat[5] = cos(theta); xMat[6] = -sin(theta);
+		xMat[9] = sin(theta); xMat[10] = cos(theta);
+		xMat[15] = 1;
 		return xMat;
 	}
 
 	// Rotate on y-axis
 	Matrix rotateOnYAxis(const float theta) {
 		Matrix yMat;
-		yMat[0] = cos(theta); yMat[1] = 0; yMat[2] = sin(theta); yMat[3] = 0;
-		yMat[4] = 0; yMat[5] = 1; yMat[6] = 0; yMat[7] = 0;
-		yMat[8] = -sin(theta); yMat[9] = 0; yMat[10] = cos(theta); yMat[11] = 0;
-		yMat[12] = 0; yMat[13] = 0; yMat[14] = 0; yMat[15] = 1;
+		for (int i = 0; i < 16; i++) yMat[i] = 0;
+		yMat[0] = cos(theta); yMat[2] = sin(theta);
+		yMat[5] = 1;
+		yMat[8] = -sin(theta); yMat[10] = cos(theta);
+		yMat[15] = 1;
 		return yMat;
 	}
 	
 	// Rotate on z-axis
 	Matrix rotateOnZAxis(const float theta) {
 		Matrix zMat;
-		zMat[0] = cos(theta); zMat[1] = -sin(theta); zMat[2] = 0; zMat[3] = 0;
-		zMat[4] = sin(theta); zMat[5] = cos(theta); zMat[6] = 0; zMat[7] = 0;
-		zMat[8] = 0; zMat[9] = 0; zMat[10] = 1; zMat[11] = 0;
-		zMat[12] = 0; zMat[13] = 0; zMat[14] = 0; zMat[15] = 1;
+		for (int i = 0; i < 16; i++) zMat[i] = 0;
+		zMat[0] = cos(theta); zMat[1] = -sin(theta);
+		zMat[4] = sin(theta); zMat[5] = cos(theta);
+		zMat[10] = 1; zMat[15] = 1;
 		return zMat;
 	}
 
 	// Translate
 	Matrix translate(const float t) {
 		Matrix trans;
-		trans[0] = 1; trans[1] = 0; trans[2] = 0; trans[3] = t;
-		trans[4] = 0; trans[5] = 1; trans[6] = 0; trans[7] = t;
-		trans[8] = 0; trans[9] = 0; trans[10] = 1; trans[11] = t;
-		trans[12] = 0; trans[13] = 0; trans[14] = 0; trans[15] = 1;
+		for (int i = 0; i < 16; i++) trans[i] = 0;
+		trans[0] = 1; trans[3] = t;
+		trans[5] = 1; trans[7] = t;
+		trans[10] = 1; trans[11] = t;
+		trans[15] = 1;
 		return trans;
 	}
 
 	// Scale
 	Matrix scale(const float s) {
 		Matrix sc;
-		sc[0] = s; sc[1] = 0; sc[2] = 0; sc[3] = 0;
-		sc[4] = 0; sc[5] = s; sc[6] = 0; sc[7] = 0;
-		sc[8] = 0; sc[9] = 0; sc[10] = s; sc[11] = 0;
-		sc[12] = 0; sc[13] = 0; sc[14] = 0; sc[15] = 1;
+		for (int i = 0; i < 16; i++) sc[i] = 0;
+		sc[0] = s; sc[5] = s; sc[10] = s; sc[15] = 1;
 		return sc;
 	}
 
@@ -361,6 +374,29 @@ public:
 		for (int i = 0; i < 16; i++)
 			inv[i] = inv[i] * det;
 		return inv;
+	}
+
+	// Projection Matrix
+	static Matrix projection(GamesEngineeringBase::Window& canvas, float zFar, float zNear, float fovTheta = 90.f) {
+		// Calculate FOV (Field of View) and Aspect Ratio
+		float aspect = static_cast<float>(canvas.getWidth()) / canvas.getHeight();
+		float fov = tan((fovTheta * (M_PI / 180.f)) / 2.f);
+		
+		// Initialize Projection Matrix
+		Matrix proj;
+		for (int i = 0; i < 16; i++) proj[i] = 0;
+
+		proj[0] = 1 / (aspect * fov);
+		proj[5] = 1 / fov;
+
+		// Z mapping
+		proj[10] = (zFar / (zFar - zNear));
+		proj[11] = -(zFar * zNear) / (zFar - zNear);
+
+		// Set w component
+		proj[14] = 1.f;
+
+		return proj;
 	}
 };
 

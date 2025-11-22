@@ -125,7 +125,7 @@
   <ItemGroup>
     <ClInclude Include="GamesEngineeringBase.h" />
     <ClInclude Include="GEMLoader.h" />
-    <ClInclude Include="math.h" />
+    <ClInclude Include="MyMath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
