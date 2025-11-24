@@ -572,6 +572,7 @@ public:
 	};
 
 	// Constructors
+	Colour() {}
 	Colour(float _r, float _g, float _b) : r(_r), g(_g), b(_b), a(1.f) {}
 	Colour(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a) {}
 	Colour(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r / 255.f), g(_g / 255.f), b(_b / 255.f), a(1.f) {}
@@ -620,7 +621,7 @@ Type simpleInterpolateAttribute(Type a0, Type a1, Type a2, float alpha, float be
 // Perspective Correct Interpolation
 template<typename Type>
 Type perspectiveCorrectInterpolateAttribute(Type a0, Type a1, Type a2, float v0_w, float v1_w, float v2_w, float alpha, float beta, float gamma, float frag_w) {
-	Type attrib[3]{};
+	Type attrib[3];
 	attrib[0] = a0 * alpha * v0_w;
 	attrib[1] = a1 * beta * v1_w;
 	attrib[2] = a2 * gamma * v2_w;

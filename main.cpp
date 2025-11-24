@@ -83,7 +83,18 @@ void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t, 
 
 				if (currentZ < zBuffer[index]) {
 					zBuffer[index] = currentZ;
-					Colour frag = simpleInterpolateAttribute(Colour(0.f, 0.f, 1.f), Colour(0.f, 1.f, 0.f), Colour(1.f, 0.f, 0.f), alpha, beta, gamma);
+					
+					float w0 = t.v0.w;
+					float w1 = t.v1.w;
+					float w2 = t.v2.w;
+					float frag_w = ((alpha * w0) + (beta * w1) + (gamma * w2));
+
+					Colour frag = perspectiveCorrectInterpolateAttribute(
+						Colour(0.f, 0.f, 1.f), Colour(0.f, 1.f, 0.f), Colour(1.f, 0.f, 0.f), // The attributes (Colors)
+						w0, w1, w2,															 // The 1/w values
+						alpha, beta, gamma,													 // The barycentric weights
+						frag_w																 // (alpha * w0) + (beta * w1) + (gamma * w2)
+					);
 					canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
 				}
 			}
