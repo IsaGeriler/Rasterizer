@@ -1,13 +1,17 @@
 #include "MyMath.h"
+#include <vector>
 
 const unsigned int WINDOW_WIDTH = 1024;
 const unsigned int WINDOW_HEIGHT = 768;
 
-void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t);
-void renderLesson1_2D(GamesEngineeringBase::Window& canvas);
-void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix);
+void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t, std::vector<float> zBuffer);
+void renderLesson1_2D(GamesEngineeringBase::Window& canvas, std::vector<float> zBuffer);
+void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix, std::vector<float> zBuffer);
 
 int main(int argc, char** argv) {
+	// Z-buffer
+	std::vector<float> zBuffer(WINDOW_WIDTH * WINDOW_HEIGHT, 1.f);
+
 	// Create a canvas
 	GamesEngineeringBase::Window canvas;
 	canvas.create(WINDOW_WIDTH, WINDOW_HEIGHT, "Rasterizer");
@@ -26,6 +30,9 @@ int main(int argc, char** argv) {
 		// Clear the canvas
 		canvas.clear();
 
+		// Reset Z-Buffer to 1.0f (Infinity/Far)
+		std::fill(zBuffer.begin(), zBuffer.end(), 1.0f);
+
 		// Input Handling
 		if (canvas.keyPressed(VK_ESCAPE)) break;
 		
@@ -40,8 +47,8 @@ int main(int argc, char** argv) {
 		}
 
 		// Render Logic
-		if (currentMode == 0) renderLesson1_2D(canvas);
-		else if (currentMode == 1) renderLesson2_Projection(canvas, proj, view);
+		if (currentMode == 0) renderLesson1_2D(canvas, zBuffer);
+		else if (currentMode == 1) renderLesson2_Projection(canvas, proj, view, zBuffer);
 
 		// Display the current frame on the canvas
 		canvas.present();
@@ -51,7 +58,7 @@ int main(int argc, char** argv) {
 	return 0;
 }
 
-void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t) {
+void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t, std::vector<float> zBuffer) {
 	Vec4 tr, bl;
 	findBounds(canvas, t.v0, t.v1, t.v2, tr, bl);
 
@@ -71,25 +78,30 @@ void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t) 
 			gamma *= area;
 
 			if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)) {
-				// alpha - blue, beta - green, gamma - red
-				Colour frag = simpleInterpolateAttribute(Colour(0.f, 0.f, 1.f), Colour(0.f, 1.f, 0.f), Colour(1.f, 0.f, 0.f), alpha, beta, gamma);
-				canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+				float currentZ = (alpha * t.v0.z) + (beta * t.v1.z) + (gamma * t.v2.z);
+				int index = y * 1024 + x;
+
+				if (currentZ < zBuffer[index]) {
+					zBuffer[index] = currentZ;
+					Colour frag = simpleInterpolateAttribute(Colour(0.f, 0.f, 1.f), Colour(0.f, 1.f, 0.f), Colour(1.f, 0.f, 0.f), alpha, beta, gamma);
+					canvas.draw(x, y, frag.r * 255, frag.g * 255, frag.b * 255);
+				}
 			}
 		}
 	}
 }
 
 // Draw 2D Rasterization
-static void renderLesson1_2D(GamesEngineeringBase::Window& canvas) {
+static void renderLesson1_2D(GamesEngineeringBase::Window& canvas, std::vector<float> zBuffer) {
 	Vec4 v0(512.f, 184.f);
 	Vec4 v1(685.f, 484.f);
 	Vec4 v2(339.f, 484.f);
 	Triangle t(v0, v1, v2);
-	rasterizeTriangle(canvas, t);
+	rasterizeTriangle(canvas, t, zBuffer);
 }
 
 // Draw 3D Projection
-static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix) {
+static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix, std::vector<float> zBuffer) {
 	Vec4 v0(0.0f, 0.3f, 1.0f);
 	Vec4 v1(0.3f, -0.3f, 1.0f);
 	Vec4 v2(-0.3f, -0.3f, 1.0f);
@@ -112,5 +124,5 @@ static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matri
 	};
 
 	Triangle t(transform(v0), transform(v1), transform(v2));
-	rasterizeTriangle(canvas, t);
+	rasterizeTriangle(canvas, t, zBuffer);
 }
