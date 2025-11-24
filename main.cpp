@@ -5,7 +5,7 @@ const unsigned int WINDOW_HEIGHT = 768;
 
 void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t);
 void renderLesson1_2D(GamesEngineeringBase::Window& canvas);
-void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix);
+void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix);
 
 int main(int argc, char** argv) {
 	// Create a canvas
@@ -14,6 +14,9 @@ int main(int argc, char** argv) {
 
 	// Initialize a projection Matrix
 	Matrix proj = Matrix::projection(canvas, 100.0f, 0.1f, 45.f);
+
+	// Camera at (0,0,5), looking at (0,0,0)
+	Matrix view = Matrix::lookAt(Vec3(0.f, 0.f, 5.f), Vec3(0.f, 0.f, 0.f), Vec3(0.f, 1.f, 0.f));
 
 	// Mode Selection for 2D or 3D Rendering
 	int currentMode = 0;
@@ -38,7 +41,7 @@ int main(int argc, char** argv) {
 
 		// Render Logic
 		if (currentMode == 0) renderLesson1_2D(canvas);
-		else if (currentMode == 1) renderLesson2_Projection(canvas, proj);
+		else if (currentMode == 1) renderLesson2_Projection(canvas, proj, view);
 
 		// Display the current frame on the canvas
 		canvas.present();
@@ -86,14 +89,16 @@ static void renderLesson1_2D(GamesEngineeringBase::Window& canvas) {
 }
 
 // Draw 3D Projection
-static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix) {
+static void renderLesson2_Projection(GamesEngineeringBase::Window& canvas, Matrix& projMatrix, Matrix& viewMatrix) {
 	Vec4 v0(0.0f, 0.3f, 1.0f);
 	Vec4 v1(0.3f, -0.3f, 1.0f);
 	Vec4 v2(-0.3f, -0.3f, 1.0f);
 
+	Matrix viewProj = projMatrix * viewMatrix;
+
 	auto transform = [&](Vec4 v) -> Vec4 {
 		// Matrix Multiply
-		Vec4 vProj = projMatrix.mul(v);
+		Vec4 vProj = viewProj.mul(v);
 
 		// Perspective Divide (divide by w)
 		Vec4 vClip = vProj.divideByW();

@@ -1,10 +1,7 @@
 #pragma once
 #define _USE_MATH_DEFINES
 #define SQ(x) (x * x)
-
-#ifndef M_PI
 #define M_PI 3.14159265358979323846
-#endif
 
 #include <algorithm>
 #include <cmath>
@@ -282,7 +279,7 @@ public:
 	}
 
 	// Rotate on x-axis
-	Matrix rotateOnXAxis(const float theta) {
+	static Matrix rotateOnXAxis(const float theta) {
 		Matrix xMat;
 		for (int i = 0; i < 16; i++) xMat[i] = 0;
 		xMat[0] = 1;
@@ -293,7 +290,7 @@ public:
 	}
 
 	// Rotate on y-axis
-	Matrix rotateOnYAxis(const float theta) {
+	static Matrix rotateOnYAxis(const float theta) {
 		Matrix yMat;
 		for (int i = 0; i < 16; i++) yMat[i] = 0;
 		yMat[0] = cos(theta); yMat[2] = sin(theta);
@@ -304,7 +301,7 @@ public:
 	}
 	
 	// Rotate on z-axis
-	Matrix rotateOnZAxis(const float theta) {
+	static Matrix rotateOnZAxis(const float theta) {
 		Matrix zMat;
 		for (int i = 0; i < 16; i++) zMat[i] = 0;
 		zMat[0] = cos(theta); zMat[1] = -sin(theta);
@@ -314,7 +311,7 @@ public:
 	}
 
 	// Translate
-	Matrix translate(const float t) {
+	static Matrix translate(const float t) {
 		Matrix trans;
 		for (int i = 0; i < 16; i++) trans[i] = 0;
 		trans[0] = 1; trans[3] = t;
@@ -325,7 +322,7 @@ public:
 	}
 
 	// Scale
-	Matrix scale(const float s) {
+	static Matrix scale(const float s) {
 		Matrix sc;
 		for (int i = 0; i < 16; i++) sc[i] = 0;
 		sc[0] = s; sc[5] = s; sc[10] = s; sc[15] = 1;
@@ -397,6 +394,25 @@ public:
 		proj[14] = 1.f;
 
 		return proj;
+	}
+
+	// LookAt Matrix
+	static Matrix lookAt(const Vec3& from, const Vec3& to, const Vec3& up) {
+		Matrix look;
+		for (int i = 0; i < 16; i++) look[i] = 0;
+
+		// Calculate dir - to - up'
+		Vec3 dir = (to - from).normalize(); // dir = (to - from) / |to - from|
+		Vec3 right = Cross(up, dir);		// right = up x dir
+		Vec3 up1 = Cross(dir, right);		// up' = dir x right
+
+		// Assign the matrix
+		look[0] = right.x; look[1] = right.y; look[2] = right.z; look[3] = Dot(-from, right);
+		look[4] = up1.x; look[5] = up1.y; look[6] = up1.z; look[7] = Dot(-from, up1);
+		look[8] = dir.x; look[9] = dir.y; look[10] = dir.z; look[11] = Dot(-from, dir);
+		look[12] = 0; look[13] = 0; look[14] = 0; look[15] = 1;
+
+		return look;
 	}
 };
 
@@ -599,4 +615,14 @@ void findBounds(GamesEngineeringBase::Window& canvas, const Vec4& v0, const Vec4
 template<typename Type>
 Type simpleInterpolateAttribute(Type a0, Type a1, Type a2, float alpha, float beta, float gamma) {
 	return (a0 * alpha) + (a1 * beta) + (a2 * gamma);
+}
+
+// Perspective Correct Interpolation
+template<typename Type>
+Type perspectiveCorrectInterpolateAttribute(Type a0, Type a1, Type a2, float v0_w, float v1_w, float v2_w, float alpha, float beta, float gamma, float frag_w) {
+	Type attrib[3]{};
+	attrib[0] = a0 * alpha * v0_w;
+	attrib[1] = a1 * beta * v1_w;
+	attrib[2] = a2 * gamma * v2_w;
+	return ((attrib[0] + attrib[1] + attrib[2]) / frag_w);
 }
