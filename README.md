@@ -2,8 +2,8 @@
 Will edit this readme later with more details, mathematical formulas, and explanation...
 
 ## Final Result
-A rotating 3D bunny...
+### Rainbow 3D Bunny (Geometry Proof)
+https://github.com/user-attachments/assets/1bdd06df-8fc0-47b0-84db-2201bb89a2da
 
-<p align="center" width="100%">
-  <video src="https://github.com/user-attachments/assets/ce6f87c0-7cfa-4631-8113-dd009dcbf906" width="80%" controls></video>
-</p>
+### Shaded 3D Bunny (Lighting Proof)
+https://github.com/user-attachments/assets/464bf5ab-592d-4a65-ab4c-a30b31f02f26
