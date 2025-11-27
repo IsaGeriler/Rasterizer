@@ -104,7 +104,7 @@ void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t, 
 
 			if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)) {
 				float currentZ = (alpha * t.v0.z) + (beta * t.v1.z) + (gamma * t.v2.z);
-				int index = y * 1024 + x;
+				int index = y * WINDOW_WIDTH + x;
 
 				if (currentZ < zBuffer[index]) {
 					zBuffer[index] = currentZ;
@@ -150,7 +150,7 @@ void rasterizeTriangle(GamesEngineeringBase::Window& canvas, const Triangle& t, 
 
 			if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)) {
 				float currentZ = (alpha * t.v0.z) + (beta * t.v1.z) + (gamma * t.v2.z);
-				int index = y * 1024 + x;
+				int index = y * WINDOW_WIDTH + x;
 
 				if (currentZ < zBuffer[index]) {
 					zBuffer[index] = currentZ;

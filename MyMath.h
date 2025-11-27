@@ -91,8 +91,8 @@ public:
 	void print() const { std::cout << '<' << v[0] << ", " << v[1] << ", " << v[2] << '>' << std::endl; }
 
 	// Max and Min of Vector Components
-	float max() const { return std::max(x, std::max(y, z)); }
-	float min() const { return std::min(x, std::min(y, z)); }
+	float Max() const { return std::max(x, std::max(y, z)); }
+	float Min() const { return std::min(x, std::min(y, z)); }
 };
 
 float Dot(const Vec3& v1, const Vec3& v2) { return (v1.v[0] * v2.v[0] + v1.v[1] * v2.v[1] + v1.v[2] * v2.v[2]); }
@@ -185,8 +185,8 @@ public:
 	void print() const { std::cout << '<' << v[0] << ", " << v[1] << ", " << v[2] << ", " << v[3] << '>' << std::endl; }
 
 	// Max and Min of Vector Components
-	float max() const { return std::max(std::max(x, y), std::max(y, z)); }
-	float min() const { return std::min(std::min(x, y), std::min(y, z)); }
+	float Max() const { return std::max(std::max(x, y), std::max(z, w)); }
+	float Min() const { return std::min(std::min(x, y), std::min(z, w)); }
 
 	// Divide by w
 	Vec4 divideByW() {
